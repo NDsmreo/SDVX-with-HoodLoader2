@@ -1,4 +1,7 @@
 
+#define MAX_BUTTONS 7
+
+
 #include <Encoder.h>
 
 int const BTA = 0;
@@ -96,39 +99,41 @@ void setupLED(int led)
   pinMode(led, OUTPUT);
 }
 
+bool buttonStates[MAX_BUTTONS] = {LOW, LOW, LOW, LOW, LOW, LOW, LOW};
+
 void checkButton(int button)
 {
   int hardwareState = digitalRead(button);
 
-  if(hardwareState != getButtonHwState(button))
+  if (hardwareState != getButtonHwState(button))
   {
-    setDebounce(button,millis());
+    setDebounce(button, millis());
   }
 
-  if((millis() - getDebounce(button)) > debounceDelay)
+  if ((millis() - getDebounce(button)) > debounceDelay)
   {
-    if(hardwareState == HIGH)
+    if (hardwareState == HIGH)
     {
-      if(getButtonState(button) == HIGH)
+      if (getButtonState(button) == HIGH)
       {
-       lightOff(button);
-       setButtonState(button,LOW);
-       buttonReleaseAction(button);
+        lightOff(button);
+        setButtonState(button, LOW);
+        buttonReleaseAction(button);
       }
     }
     else
     {
-      if(getButtonState(button) == LOW)
+      if (getButtonState(button) == LOW)
       {
         lightOn(button);
         releaseKey(button);
-        setButtonState(button,HIGH);
+        setButtonState(button, HIGH);
         buttonPressAction(button);
         Serial.write(button);
       }
     }
   }
-  setButtonHwState(button,hardwareState);
+  setButtonHwState(button, hardwareState);
 }
 
 void lightOff(int inputPin)
@@ -380,87 +385,54 @@ void debugInput(String message, int inputPort)
 
 void setButtonState(int button, bool state)
 {
-  switch(button)
+  switch (button)
   {
-    case BTA:
-    {
-      BTAState = state;
-      break;
-    }
-    case BTB:
-    {
-      BTBState = state;
-      break;
-    }
-    case BTC:
-    {
-      BTCState = state;
-      break;
-    }
-    case BTD:
-    {
-      BTDState = state;
-      break;
-    }
-    case FXL:
-    {
-      FXLState = state;
-      break;
-    }
-    case FXR:
-    {
-      FXRState = state;
-      break;
-    }
-    case START:
-    {
-      StartState = state;
-      break;
-    }
+  case BTA:
+    buttonStates[0] = state;
+    break;
+  case BTB:
+    buttonStates[1] = state;
+    break;
+  case BTC:
+    buttonStates[2] = state;
+    break;
+  case BTD:
+    buttonStates[3] = state;
+    break;
+  case FXL:
+    buttonStates[4] = state;
+    break;
+  case FXR:
+    buttonStates[5] = state;
+    break;
+  case START:
+    buttonStates[6] = state;
+    break;
   }
 }
 
+
 bool getButtonState(int button)
 {
-  switch(button)
+  switch (button)
   {
-    case BTA:
-    {
-      return BTAState;
-      break;
-    }
-    case BTB:
-    {
-      return BTBState;
-      break;
-    }
-    case BTC:
-    {
-      return BTCState;
-      break;
-    }
-    case BTD:
-    {
-      return BTDState;
-      break;
-    }
-    case FXL:
-    {
-      return FXLState;
-      break;
-    }
-    case FXR:
-    {
-      return FXRState;
-      break;
-    }
-    case START:
-    {
-      return StartState;
-      break;
-    }
+  case BTA:
+    return buttonStates[0];
+  case BTB:
+    return buttonStates[1];
+  case BTC:
+    return buttonStates[2];
+  case BTD:
+    return buttonStates[3];
+  case FXL:
+    return buttonStates[4];
+  case FXR:
+    return buttonStates[5];
+  case START:
+    return buttonStates[6];
   }
 }
+
 
 String getName(int inputPort)
 {
@@ -733,7 +705,8 @@ int buttonToLight(int button)
   }
 }
 
-void loop() {
+void loop()
+{
   checkButton(BTA);
   checkButton(BTB);
   checkButton(BTC);
@@ -745,7 +718,8 @@ void loop() {
   checkKnob(VOLLA, VOLLB);
   checkKnob(VOLRA, VOLRB);
 
-  if (hasStateChanged()) {
+  if (hasStateChanged())
+  {
     serialFromState();
     delay(5); // 5ms 딜레이
   }
@@ -753,9 +727,21 @@ void loop() {
 
 bool hasStateChanged() {
 
-  return BTAState || BTBState || BTCState || BTDState || FXLState || FXRState ||
-         VOLLState != Stop || VOLRState != Stop;
+  int buttons[7] = {BTA, BTB, BTC, BTD, FXL, FXR, START};
+  bool buttonStates[7] = {BTAState, BTBState, BTCState, BTDState, FXLState, FXRState, StartState};
+
+  for (int i = 0; i < 7; i++) {
+    if (buttonStates[i] != getButtonState(buttons[i])) {
+      return true;
+    }
+  }
+
+  return VOLLState != Stop || VOLRState != Stop;
 }
+
+
+
+
 
 void pressKey()
 {
