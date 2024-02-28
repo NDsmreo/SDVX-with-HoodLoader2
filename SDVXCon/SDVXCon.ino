@@ -55,7 +55,7 @@ Encoder encL(VOLLA,VOLLB);
 Encoder encR(VOLRA,VOLRB);
 long encLPosition, encRPosition = 0;
 
-uint8_t buf[8] = { 0 }; 
+uint8_t buf[9] = { 0 }; 
 
 typedef enum KnobState {
   CW,
@@ -231,7 +231,6 @@ void setVolLState(KnobState state)
   if(VOLLState != state)
   {
     VOLLState = state;
-    serialFromState();
   }
 }
 
@@ -241,25 +240,24 @@ void setVolRState(KnobState state)
   if(VOLRState != state)
   {
     VOLRState = state;
-    serialFromState();
   }
 }
 
 void buttonPressAction(int button)
 {
-  debugInput("Pressed",button);
-  serialFromState();
+  debugInput("Pressed", button);
+  buf[2] = getKey(button);  // 버튼이 눌릴 때 버퍼에 해당 키 값 저장
 }
 
 void buttonReleaseAction(int button)
 {
-  debugInput("Released",button);
-  serialFromState();
+  debugInput("Released", button);
+  buf[2] = 0;  // 버튼이 떼어질 때 버퍼 초기화
+  Serial.write(buf, 9);
 }
 
 void serialFromState()
 {
-
   int buttons[7] = {BTA,BTB,BTC,BTD,FXL,FXR,START};
   int slotIndex = 2;
   for( int i = 0; i < 7; i++)
@@ -271,9 +269,7 @@ void serialFromState()
     }
   }
 
-
-
-  if(slotIndex < 8)
+  if(slotIndex < 9) // 버퍼 크기만큼 루프 추가
   {
     if(VOLLState == CW)
     {
@@ -287,7 +283,7 @@ void serialFromState()
     }
   }
 
-  if(slotIndex < 8)
+  if(slotIndex < 9) // 버퍼 크기만큼 루프 추가
   {
     if(VOLRState == CW)
     {
@@ -301,15 +297,13 @@ void serialFromState()
     }
   }
 
-
-  for(int i = slotIndex; i < 8; i++)
+  for(int i = slotIndex; i < 9; i++) // 버퍼 크기만큼 루프 추가
   {
     buf[slotIndex] = 0;
   }
 
-  //Send the message
-  Serial.write(buf, 8);
-  
+  // 메시지 전송
+  Serial.write(buf, 9); // 버퍼 크기만큼 수정
 }
 
 uint8_t getKey(int inputPin)
@@ -749,8 +743,8 @@ void pressKey()
   //Serial.write(buf, 8);
 }
 
-void releaseKey(int button) 
+void releaseKey(int button)
 {
-  buf[2] = 0; 
-  Serial.write(buf, 8);  
+  buf[2] = getKey(button);  // 버튼이 떼어질 때 해당 키 값 저장
+  Serial.write(buf, 9);
 }
